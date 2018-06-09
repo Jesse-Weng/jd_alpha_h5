@@ -334,11 +334,17 @@
           this.name = device.device_name;
         }
         //遍历stream数组刷新页面各个参数值
+        let closeDoor = true;
         suc["streams"] && suc["streams"].forEach((val, i) => {
           //门开关工作状态
-          if (val["stream_id"] == "DoorSwitchWorkingState") {
-            self.warn = val["current_value"] == 1 ? '冰箱门未关' : ''
-          }
+          //冷冻门未关
+          if (val["stream_id"] == "FreezerDoorSwitch" && val["current_value"] == 1) closeDoor = false;
+          //变温门未关
+          if (val["stream_id"] == "VariableTempDoorSwitch" && val["current_value"] == 1) closeDoor = false;
+          //保鲜门开关
+          if (val["stream_id"] == "PreservationDoorSwitch" && val["current_value"] == 1) closeDoor = false;
+          //冷藏门开关
+          if (val["stream_id"] == "RefrigerationDoorSwitch" && val["current_value"] == 1) closeDoor = false;
           //空气清新指数
           if (val["stream_id"] == "AirQualityIndex") {
             self.airFreshnessIndex = val["current_value"];
@@ -394,6 +400,7 @@
             }
           }
         });
+        self.warn = closeDoor ? '' : '冰箱门未关';
       },
       controlDevice: function (command, callback) {
         JDSMART.io.controlDevice(      //控制设备接口：如开关
