@@ -28,7 +28,6 @@ header ul li{ float: left; width: 33.333%; font-size: 13px; text-align: center;}
 header ul li span{ font-size: 28px;}
 header ul li div{ font-size: 28px;margin-top: .17rem;border-left: 1px solid #fff;border-right: 1px solid #fff}
 header ul li p{ margin-top: 15px; margin-bottom: 15px; font-size: 14px;}
-
 header dl{ width:44%; position:absolute; top:50%; margin-top:-24px; color:#fff; text-align:center; right:0; font-size:20px;}
 header dl dd span{ font-size:24px;}
 /* 默认样式 */
