@@ -4,27 +4,24 @@
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no">
   <meta charset="utf-8">
-  <title>微联空调</title>
+  <title>康佳冰箱</title>
   <script>
     (function () {
       var baseFontSize = 100;
       var baseWidth = 320;
-
       var set = function () {
         var clientWidth = document.documentElement.clientWidth || window.innerWidth;
-
         var rem = 100;
         if (clientWidth != baseWidth) {
           rem = Math.floor(clientWidth / baseWidth * baseFontSize);
         }
-
         document.querySelector('html').style.fontSize = rem + 'px';
       }
       set();
-
       window.addEventListener('resize', set);
     }());
   </script>
+  <link type="text/css" rel="stylesheet" href="css/vue-stone.css">
   <link type="text/css" rel="stylesheet" href="css/style.css">
 </head>
 
@@ -35,391 +32,323 @@
 </style>
 
 <body>
-  <div id="app" @click='closeAllDialog'>
-    <div id="loading" :style="{display: loading}">页面加载中，请稍候...</div>
-    <!--头部标题-->
-    <div class="nav header" :class="status">
-      <img class="nav-logo" src="./images/nav_logo.png" />
+  <div id="app" style="margin-top:0px;background: #fff;">
+    <!--头部及power-->
+    <!--蓝色-->
+    <header :class="status+'_bg'">
+      <ul>
+        <li>
+          <p class="transparent-font">冷藏室℃</p>
+          <span class="header-index">{{coldRoomValue}}</span>
+        </li>
+        <li>
+          <p class="transparent-font">空气质量</p>
+          <div class="air-quality" v-if="status === 'green'">清新</div>
+          <div class="air-quality" v-if="status === 'orange'">良好</div>
+          <div class="air-quality" v-if="status === 'red'">异常</div>
+        </li>
+        <li>
+          <p class="transparent-font">环温℃</p>
+          <span class="header-index">{{ambientTemperature}}</span>
+        </li>
+      </ul>
+      <div class="air-freshness-index">
+        空气清新指数: {{airFreshnessIndex}}
+      </div>
+    </header>
+    <div slot="header" class="c-panel-header u-cross-center mode-title gray_bg" v-if="warn">
+      <div class="c-panel-title">
+        <img class="warn" src="./img/warn.png" />冰箱门未关</div>
     </div>
-    <!-- 中部 -->
-    <h3 class="title">
-      <img src="./images/warn.png" class="warn-icon" v-if="!!warn" /> {{warn ? warn : name}}
-    </h3>
-    <div class="home-display" :style="{ height: homeHeight }" :class="status">
-      <div class="home-display-animation" :style="{ backgroundImage: sterilizationImage }">
-        <h1 class="air-freshness-index" @click='showAirIndex = true'>
-          空气清新指数: {{airFreshnessIndex}}
-          <span class="arrow"></span>
-        </h1>
-        <div class="air-type">
-          {{airType}}
-        </div>
-        <div class="sterilization" :class="{active: sterilizationLevel}" @click.stop.prevent="displaySterilization">
-          云离子杀菌 {{sterilizationLevel}}
+    <!--冷藏室温度设置-->
+    <div slot="body" class="c-panel-body row-2 u-cross-center border-bottom-gray">
+      <div slot="title" class="c-panel-title ">冷藏室温度设置
+        <div class="cold-room-index" :class="status+'-font'">
+          {{ coldRoomValue }}
+          <span class="celsius">℃</span>
         </div>
       </div>
+      <v-counter slot="main" ref="coldRoomDom"></v-counter>
     </div>
-    <!-- 冷藏冷冻室 -->
-    <div class="storage-freezing">
-      <!-- 冷藏室 -->
-      <div class="w50">
-        <div class="storage div-center" @click.stop.prevent='displayColdStorage'>
-          <div class="cold-index" :class="status">
-            {{coldStorageIndex}}
-          </div>
-          <div class="cold-title">
-            <div class="icon-container">
-              <div class="centigrade">
-                ℃
-              </div>
-              <div class="icon-gray">
-                <img class="icon" src="./images/home_ic_cold_gray.png" v-if="coldType === 'fastCooling'" />
-              </div>
-            </div>
-            <div>
-              冷藏室
-            </div>
-          </div>
-        </div>
+    <!--云离子杀菌-->
+    <div class="border-bottom-gray">
+      <div slot="body" class="c-panel-header u-cross-center mode-title sterilization">
+        <div slot="title" class="c-panel-title">云离子杀菌</div>
+        <v-switch slot="main" v-model="isSterilization" ref="sterilizationDom" :class="status"></v-switch>
       </div>
-      <!-- 中间线 -->
-      <div class="center-line"></div>
-      <!-- 冷冻室 -->
-      <div class="w50">
-        <div class="storage div-center">
-          <div class="cold-index" :class="status">
-            {{freezingIndex}}
-          </div>
-          <div class="cold-title">
-            <div class="icon-container">
-              <div class="centigrade">
-                ℃
-              </div>
-              <div class="icon-gray">
-                <img class="icon" src="./images/home_ic_freeze_nor_gray.png" v-if="false" />
-              </div>
-            </div>
-            <div>
-              环境温度
-            </div>
-          </div>
-        </div>
+      <div slot="body" class="padding-0-12">
+        <v-range slot="main" ref="rangeArray" v-model="range_data_array.value" :is_step="range_data_array.isStep" :dots="range_data_array.dots"
+          :class="{[status]: isSterilization}">
+        </v-range>
+        <div class="mask" v-if="!isSterilization"></div>
       </div>
     </div>
-    <!--切换组件实现-->
-    <footer class="nav buttom" :class="status">
-      <div class="bar-tab-item" :class="{ active: coldType === 'fastCooling'}" @click='changeColdType("fastCooling")'>
-        <div class="buttom-icon snowflake-one"></div>
-        <div class="aui-bar-tab-label">速冷</div>
+    <!--模式-->
+    <div class="border-bottom-gray">
+      <div slot="header" class="c-panel-header u-cross-center mode-title">
+        <div class="c-panel-title">模式</div>
       </div>
-      <div class="bar-tab-item" :class="{ active: coldType === 'energyConservation'}" @click='changeColdType("energyConservation")'>
-        <div class="buttom-icon leaf"></div>
-        <div class="aui-bar-tab-label">节能</div>
-      </div>
-    </footer>
-    <!-- 空气清新指数弹框 -->
-    <div class="air-index-mask" v-if="showAirIndex" @click="showAirIndex = false">
-      <div class="air-index-dialog">
-        <div class="air-index-dialog-text">
-          空气清新指数：范围0-100，数值越高越清新
+      <div class="wjx-mode">
+        <div class="wjx-mode-item border-right-gray" :class="{[status + '-background']: modeValue === 'quickCooling'}" @click='changeMode("quickCooling")'>
+          <div>
+            <div class="mode-icon" :class="{[modeValue === 'quickCooling' ? 'quick-cooling-icon-active': 'quick-cooling-icon']: true}"></div>
+            <p>速冷模式</p>
+          </div>
         </div>
-        <div class="i-know">
-          <div class="i-know-button" @click="showAirIndex = false">我知道了</div>
+        <div class="wjx-mode-item border-right-gray" :class="{[status + '-background']: modeValue === 'energySaving'}" @click='changeMode("energySaving")'>
+          <div>
+            <div class="mode-icon" :class="{[modeValue === 'energySaving' ? 'energy-saving-icon-active' : 'energy-saving-icon']: true}"></div>
+            <p>节能模式</p>
+          </div>
         </div>
       </div>
     </div>
-    <!-- 杀菌弹框 -->
-    <ul class="dialog sterilization-dialog" v-if="showSterilization">
-      <li v-for="option in sterilizationOptions" @click="selectSterilization(option)">{{option.label}}</li>
-    </ul>
-    <!-- 冷藏室弹框 -->
-    <ul class="dialog cold-storage-dialog" v-if="showColdStorage">
-      <li v-for="option in coldStorageOptions" @click="selectColdStorage(option)">{{option}}℃</li>
-      <li @click="selectColdStorage(0)">关闭</li>
-    </ul>
-    <!-- 冷冻室弹框 -->
-    <ul class="dialog freezing-dialog" v-if="showFreezing">
-      <li v-for="option in freezingOptions" @click="selectFreezing(option)">{{option}}℃</li>
-    </ul>
   </div>
-</body>
-<script type="text/javascript" src="./js/vue.min.js"></script>
-<script type="text/javascript" src="https://static.360buyimg.com/smart/jdsmart-1.0.3.js"></script>
-<script>
-  new Vue({
-    el: '#app',
-    data() {
-      return {
-        name: '',
-        warn: '',
-        status: 'good',
-        startUp: true,
-        airFreshnessIndex: 100,
-        showAirIndex: false,
-        airType: '清新',
-        //杀菌参数
-        sterilizationLevel: '',
-        showSterilization: false,
-        sterilizationOptions: [
-          { value: 0, label: '自动' },
-          { value: 1, label: '强' },
-          { value: 2, label: '中' },
-          { value: 3, label: '弱' },
-          { value: 4, label: '关' },
-        ],
-        coldType: 'default',
-        //冷藏室参数
-        coldStorageIndex: 0,          //冷藏指数
-        showColdStorage: false,
-        coldStorageOptions: ['2', '3', '4', '5', '6', '7', '8', '9'],
-        //冷冻室参数
-        freezingIndex: 0,          //冷藏指数
-        showFreezing: false,
-        freezingOptions: ['-24', '-23', '-22', '-21', '-20', '-19', '-18', '-17', '-16', '-15'],
-        sterilizationImage: '',
-        sterilizeInterval: null,
-        homeHeight: '0px',
-        loading: '',
-      };
-    },
-    created: function () {
-      this.ready();
-      this.homeHeight = `${window.innerWidth}px`;
-      this.loading = 'none';
-    },
-    methods: {
-      ready: function () {
-        var self = this;
-        JDSMART.ready(function () {
-          self.showButton(true);
-          self.getInitData();
-          setInterval(function () {
-            self.getInfo();
-          }, 2000);
-        });
-      },
-      //修改冷类型
-      changeColdType: function (type) {
-        let currentValue = 0
-        if (type == this.coldType) {
-          this.coldType = 'default';
-        } else if (type == 'fastCooling') {
-          this.coldType = type;
-          currentValue = 4
-        } else if (type == 'energyConservation') {
-          this.coldType = type;
-          currentValue = 2
-        }
-        this.controlDevice({
-          "command": [{
-            "stream_id": "Mode",
-            "current_value": currentValue
-          }]
-        }, function (suc) {
-        });
-      },
-      //杀菌
-      //显示杀菌弹框
-      displaySterilization: function () {
-        this.showSterilization = true;
-        this.showColdStorage = false;
-        this.showFreezing = false;
-      },
-      //选择杀菌类型
-      selectSterilization: function (option) {
-        // this.sterilizationLevel = option.label == '关' ? '' : option.label;
-        this.controlDevice({
-          "command": [{
-            "stream_id": "PurificationModuleMode",//启动
-            "current_value": option.value
-          }]
-        }, function (suc) {
-        });
-        this.showSterilization = false;
-      },
-      //冷藏室
-      //显示冷藏室数据
-      displayColdStorage: function () {
-        this.showSterilization = false;
-        this.showColdStorage = true;
-        this.showFreezing = false;
-      },
-      //选择冷藏室数据
-      selectColdStorage: function (option) {
-        this.coldStorageIndex = option;
-        this.showColdStorage = false;
-        this.controlDevice({
-          "command": [{
-            "stream_id": "RefrigerationTemperature",
-            "current_value": option
-          }]
-        }, function (suc) {
-        });
-      },
-      //冷冻室
-      //显示冷冻室数据
-      displayFreezing: function () {
-        this.showSterilization = false;
-        this.showColdStorage = false;
-        this.showFreezing = true;
-      },
-      //选择冷冻室数据
-      selectFreezing: function (option) {
-        if (option !== '关闭') this.freezingIndex = option;
-        this.controlDevice({
-          "command": [{
-            "stream_id": "FreezingTemperature",
-            "current_value": option
-          }]
-        }, function (suc) {
-        });
-        this.showFreezing = false;
-      },
-      //关闭所有弹框
-      closeAllDialog: function () {
-        this.showSterilization = false;
-        this.showColdStorage = false;
-        this.showFreezing = false;
-      },
-      //杀菌轮播图
-      startUpSterilize: function () {
-        if (!this.sterilizeInterval) {
-          let index = 00;
-          this.sterilizeInterval = setInterval(() => {
-            index = index == 84 ? 00 : index + 1;
-            this.sterilizationImage = `url(./images/animation/gif000${index}.png)`;
-          }, 42);
-        }
-      },
-      stopSterilize: function () {//停止杀菌
-        window.clearInterval(this.sterilizeInterval);
-        this.sterilizationImage = '';
-        this.sterilizeInterval = null;
-      },
-      showButton: function (flag) {//配置导航按钮隐藏显示
-        JDSMART.app.config(
-          {
-            showBack: flag,
-            showShare: flag,
-            showMore: flag
-          });
-      },
-      //获取设备初始化数据
-      getInitData: function () {
-        var self = this;
-        JDSMART.io.initDeviceData(function (suc) {
-          self.setData(suc);
-        });
-      },
-      //刷新数据
-      getInfo: function () {
-        var self = this;
-        JDSMART.io.getSnapshot(
-          function (suc) {
-            self.setData(suc);
-          }, function (error) {
-            // 执行失败的回调
-            self.toast(error.errorInfo);
-          }
-        );
-      },
-      //设置数据
-      setData: function (suc) {
-        var self = this;
-        if (typeof (suc) == "string") {
-          suc = JSON.parse(suc);
-        }
-        var device = suc.device;
-        if (device && device.device_name) {
-          this.name = device.device_name;
-        }
-        //遍历stream数组刷新页面各个参数值
-        let closeDoor = true;
-        suc["streams"] && suc["streams"].forEach((val, i) => {
-          //门开关工作状态
-          //冷冻门未关
-          if (val["stream_id"] == "FreezerDoorSwitch" && val["current_value"] == 1) closeDoor = false;
-          //变温门未关
-          if (val["stream_id"] == "VariableTempDoorSwitch" && val["current_value"] == 1) closeDoor = false;
-          //保鲜门开关
-          if (val["stream_id"] == "PreservationDoorSwitch" && val["current_value"] == 1) closeDoor = false;
-          //冷藏门开关
-          if (val["stream_id"] == "RefrigerationDoorSwitch" && val["current_value"] == 1) closeDoor = false;
-          //空气清新指数
-          if (val["stream_id"] == "AirQualityIndex") {
-            self.airFreshnessIndex = val["current_value"];
-            if (100 >= val["current_value"] && val["current_value"] >= 71) {
-              self.status = 'good';
-              self.airType = '清新';
-            } else if (70 >= val["current_value"] && val["current_value"] >= 51) {
-              self.status = 'normal';
-              self.airType = '优良';
-            } else if (50 >= val["current_value"] && val["current_value"] >= 0) {
-              self.status = 'bad';
-              self.airType = '异常';
-            }
-          }
-          //冷藏室温度
-          if (val["stream_id"] == "RefrigerationTemperature") {
-            self.coldStorageIndex = val["current_value"];
-          }
-          //环境传感器温度值
-          if (val["stream_id"] == "EnvironmentalSensorTemperature") {
-            self.freezingIndex = val["current_value"];
-          }
-          //杀菌是否启动
-          if (val["stream_id"] == "NegativeIonFunction") {
-            if (val["current_value"] == 1) {
-              self.startUpSterilize();
-            } else {
-              self.stopSterilize();
-            }
-          }
-          //开启杀菌
-          if (val["stream_id"] == "PurificationModuleMode") {
-            if (parseInt(val["current_value"]) == 0) {
-              this.sterilizationLevel = '自动';
-            } else if (parseInt(val["current_value"]) == 1) {
-              this.sterilizationLevel = '强';
-            } else if (parseInt(val["current_value"]) == 2) {
-              this.sterilizationLevel = '中';
-            } else if (parseInt(val["current_value"]) == 3) {
-              this.sterilizationLevel = '弱';
-            } else {
-              this.sterilizationLevel = '';
-            }
-          }
-          //模式
-          if (val["stream_id"] == "Mode") {
-            if (val["current_value"] == 4) {//冷藏模式
-              self.coldType = 'fastCooling';
-            } else if (val["current_value"] == 2) {//节能模式
-              self.coldType = 'energyConservation';
-            } else {
-              self.coldType = 'default';
-            }
-          }
-        });
-        self.warn = closeDoor ? '' : '冰箱门未关';
-      },
-      controlDevice: function (command, callback) {
-        JDSMART.io.controlDevice(      //控制设备接口：如开关
-          command,
-          function (suc) {
-            if (callback) callback(suc);
-            this.getInfo();
+  <script src="js/vue.min.js"></script>
+  <script src="js/vue-stone.js"></script>
+  <script type="text/javascript" src="js/jquery.js"></script>
+  <script type="text/javascript" src="https://static.360buyimg.com/smart/jdsmart-1.0.3.js"></script>
+  <script>
+    new Vue({
+      el: '#app',
+      data() {
+        return {
+          status: 'green',
+          warn: false,
+          coldRoomValue: 0,
+          ambientTemperature: 0,
+          airFreshnessIndex: 99,
+          modeValue: '',
+          isSterilization: false,
+          range_data_array: {// 云离子杀菌程度
+            value: {
+              value: 3,
+              text: '弱'
+            },
+            isStep: true,
+            dots: [
+              {
+                value: 3,
+                text: '弱'
+              },
+              {
+                value: 2,
+                text: '中'
+              },
+              {
+                value: 1,
+                text: '强'
+              },
+              {
+                value: 0,
+                text: '自动'
+              }
+            ],
           },
-          function (error) {
-            toast(error.errorInfo);
-          }
-        );
+        };
       },
-      toast: function (str) {
-        JDSMART.toast({ "message": str }, null);
+      mounted() {
+        var self = this;
+        this.$refs.coldRoomDom.$on('increase', () => {//温度加下发
+          self.controlDevice({
+            "command": [{
+              "stream_id": "RefrigerationTemperature",//冷藏温度设定值
+              "current_value": parseInt(self.coldRoomValue) + 80 + 1
+            }]
+          }, function (suc) {
+          });
+        });
+        this.$refs.coldRoomDom.$on('decrease', () => {//温度减下发
+          self.controlDevice({
+            "command": [{
+              "stream_id": "RefrigerationTemperature",//冷藏温度设定值
+              "current_value": parseInt(self.coldRoomValue) + 80 - 1
+            }]
+          }, function (suc) {
+          });
+        });
+        this.$refs.sterilizationDom.$on('change', (value) => {//开启负离子功能
+          this.range_data_array.value = { value: 3, text: '弱' }
+          self.controlDevice({
+            "command": [{
+              "stream_id": "NegativeIonFunction",//启动
+              "current_value": value ? 1 : 0
+            }]
+          }, function (suc) {
+          });
+        });
+        this.$refs.rangeArray.$on('change', (value) => {//云离子杀菌程度
+          self.controlDevice({
+            "command": [{
+              "stream_id": "PurificationModuleMode",//启动
+              "current_value": value.value
+            }]
+          }, function (suc) {
+          });
+        });
+      },
+      created: function () {
+        this.ready();
+      },
+      methods: {
+        ready: function () {
+          var self = this;
+          JDSMART.ready(function () {
+            self.showButton(true);
+            self.getInitData();
+            setInterval(function () {
+              self.getInfo();
+            }, 3000);
+          });
+        },
+        //修改模式
+        changeMode: function (mode) {
+          let currentValue = 0
+          if (mode == this.modeValue) {
+            this.modeValue = '';
+          } else if (mode == 'quickCooling') {
+            this.modeValue = mode;
+            currentValue = 4
+          } else if (mode == 'energySaving') {
+            this.modeValue = mode;
+            currentValue = 2
+          }
+          this.controlDevice({
+            "command": [{
+              "stream_id": "Mode",
+              "current_value": currentValue
+            }]
+          }, function (suc) {
+          });
+        },
+        showButton: function (flag) {//配置导航按钮隐藏显示
+          JDSMART.app.config(
+            {
+              showBack: flag,
+              showShare: flag,
+              showMore: flag
+            });
+        },
+        //获取设备初始化数据
+        getInitData: function () {
+          var self = this;
+          JDSMART.io.initDeviceData(function (suc) {
+            self.setData(suc);
+          });
+        },
+        //刷新数据
+        getInfo: function () {
+          var self = this;
+          JDSMART.io.getSnapshot(
+            function (suc) {
+              self.setData(suc);
+            }, function (error) {
+              // 执行失败的回调
+              self.toast(error.errorInfo);
+            }
+          );
+        },
+        //设置数据
+        setData: function (suc) {
+          var self = this;
+          if (typeof (suc) == "string") {
+            suc = JSON.parse(suc);
+          }
+          //遍历stream数组刷新页面各个参数值
+          let closeDoor = true;
+          suc["streams"] && suc["streams"].forEach((val, i) => {
+            //门开关工作状态
+            //冷冻门未关
+            if (val["stream_id"] == "FreezerDoorSwitch" && val["current_value"] == 1) closeDoor = false;
+            //变温门未关
+            if (val["stream_id"] == "VariableTempDoorSwitch" && val["current_value"] == 1) closeDoor = false;
+            //保鲜门开关
+            if (val["stream_id"] == "PreservationDoorSwitch" && val["current_value"] == 1) closeDoor = false;
+            //冷藏门开关
+            if (val["stream_id"] == "RefrigerationDoorSwitch" && val["current_value"] == 1) closeDoor = false;
+            //空气清新指数
+            if (val["stream_id"] == "AirQualityIndex") {
+              if (val["current_value"] > self.airFreshnessIndex) {
+                if (99 >= val["current_value"] && val["current_value"] >= 73) {
+                  self.status = 'green';
+                } else if (72 >= val["current_value"] && val["current_value"] >= 53) {
+                  self.status = 'orange';
+                } else if (52 >= val["current_value"] && val["current_value"] >= 0) {
+                  self.status = 'red';
+                }
+              } else if (val["current_value"] < self.airFreshnessIndex) {
+                if (99 >= val["current_value"] && val["current_value"] >= 71) {
+                  self.status = 'green';
+                } else if (70 >= val["current_value"] && val["current_value"] >= 51) {
+                  self.status = 'orange';
+                } else if (50 >= val["current_value"] && val["current_value"] >= 0) {
+                  self.status = 'red';
+                }
+              }
+              self.airFreshnessIndex = val["current_value"];
+            }
+            //冷藏室温度
+            if (val["stream_id"] == "RefrigerationTemperature") {
+              self.coldRoomValue = parseInt(val["current_value"]) - 80;
+            }
+            //环境传感器温度值
+            if (val["stream_id"] == "EnvironmentalSensorTemperature") {
+              self.ambientTemperature = val["current_value"];
+            }
+            //杀菌是否启动
+            if (val["stream_id"] == "NegativeIonFunction") {
+              if (val["current_value"] == 1) {
+                self.isSterilization = true;
+              } else {
+                self.isSterilization = false
+              }
+            }
+            //开启杀菌
+            if (val["stream_id"] == "PurificationModuleMode") {
+              if (parseInt(val["current_value"]) == 0) {
+                this.range_data_array.value = { value: 0, text: '自动' }
+              } else if (parseInt(val["current_value"]) == 1) {
+                this.range_data_array.value = { value: 1, text: '强' }
+              } else if (parseInt(val["current_value"]) == 2) {
+                this.range_data_array.value = { value: 2, text: '中' }
+              } else if (parseInt(val["current_value"]) == 3) {
+                this.range_data_array.value = { value: 3, text: '弱' }
+              } else {
+                this.range_data_array.value = { value: 3, text: '弱' }
+              }
+            }
+            //模式
+            if (val["stream_id"] == "Mode") {
+              if (val["current_value"] == 4) {//冷藏模式
+                self.modeValue = 'quickCooling';
+              } else if (val["current_value"] == 2) {//节能模式
+                self.modeValue = 'energySaving';
+              } else {
+                self.modeValue = '';
+              }
+            }
+          });
+          self.warn = !closeDoor;
+        },
+        controlDevice: function (command, callback) {
+          JDSMART.io.controlDevice(      //控制设备接口：如开关
+            command,
+            function (suc) {
+              if (callback) callback(suc);
+              this.getInfo();
+            },
+            function (error) {
+              toast(error.errorInfo);
+            }
+          );
+        },
+        toast: function (str) {
+          JDSMART.toast({ "message": str }, null);
+        }
       }
-    }
-  });
+    });
+  </script>
 
-</script>
+</body>
 
 </html>
