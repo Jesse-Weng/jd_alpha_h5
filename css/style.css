@@ -221,7 +221,7 @@ header.red_bg{ background: url('../img/red_bg.png') no-repeat;background-size: 1
     background-image: url('../img/home_ic_energy_sel.png');
 }
 .mask {
-    width: 100%;
+    width: 95%;
     height: .5rem;
     position: absolute;
     margin-top: -0.7rem;
