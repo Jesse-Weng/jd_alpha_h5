@@ -180,7 +180,7 @@
         this.$refs.rangeArray.$on('change', (value) => {//云离子杀菌程度
           self.controlDevice({
             "command": [{
-              "stream_id": "PurificationModuleMode",//启动
+              "stream_id": "PurificationModuleMode",//净化模块模式
               "current_value": value.value
             }]
           }, function (suc) {
