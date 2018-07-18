@@ -27,7 +27,8 @@
 
 <style>
   body {
-    font-size: 16px;
+    font-size: 14px;
+    overflow: auto;
   }
 </style>
 
@@ -39,30 +40,32 @@
       <ul>
         <li>
           <p class="transparent-font">冷藏室℃</p>
-          <span class="header-index">{{coldRoomValue}}</span>
+          <span>{{coldRoomValue}}</span>
         </li>
         <li>
           <p class="transparent-font">空气质量</p>
-          <div class="air-quality" v-if="status === 'green'">清新</div>
-          <div class="air-quality" v-if="status === 'orange'">良好</div>
-          <div class="air-quality" v-if="status === 'red'">异常</div>
+          <div v-if="status === 'green'">清新</div>
+          <div v-if="status === 'orange'">良好</div>
+          <div v-if="status === 'red'">异常</div>
         </li>
         <li>
           <p class="transparent-font">环温℃</p>
-          <span class="header-index">{{ambientTemperature}}</span>
+          <span>{{ambientTemperature}}</span>
         </li>
       </ul>
       <div class="air-freshness-index">
         空气清新指数: {{airFreshnessIndex}}
       </div>
     </header>
-    <div slot="header" class="c-panel-header u-cross-center mode-title gray_bg" v-if="warn">
-      <div class="c-panel-title">
-        <img class="warn" src="./img/warn.png" />冰箱门未关</div>
+    <div slot="header" class="c-panel-header u-cross-center" v-if="warn">
+      <div class="c-panel-title font-14">
+        <img class="warn" src="./img/warn.png" />冰箱门未关
+      </div>
     </div>
     <!--冷藏室温度设置-->
     <div slot="body" class="c-panel-body row-2 u-cross-center border-bottom-gray">
-      <div slot="title" class="c-panel-title ">冷藏室温度设置
+      <div slot="title" class="c-panel-title">
+        <div class="cold-room-setting">冷藏室温度设置</div>
         <div class="cold-room-index" :class="status+'-font'">
           {{ coldRoomValue }}
           <span class="celsius">℃</span>
@@ -76,7 +79,7 @@
         <div slot="title" class="c-panel-title">云离子杀菌</div>
         <v-switch slot="main" v-model="isSterilization" ref="sterilizationDom" :class="status"></v-switch>
       </div>
-      <div slot="body" class="padding-0-12">
+      <div slot="body" class="c-panel-body row-3 u-cross-center padding-0-12">
         <v-range slot="main" ref="rangeArray" v-model="range_data_array.value" :is_step="range_data_array.isStep" :dots="range_data_array.dots"
           :class="{[status]: isSterilization}">
         </v-range>
@@ -92,18 +95,19 @@
         <div class="wjx-mode-item border-right-gray" :class="{[status + '-background']: modeValue === 'quickCooling'}" @click='changeMode("quickCooling")'>
           <div>
             <div class="mode-icon" :class="{[modeValue === 'quickCooling' ? 'quick-cooling-icon-active': 'quick-cooling-icon']: true}"></div>
-            <p>速冷模式</p>
+            <p class="gray_font" :class="{active: modeValue === 'quickCooling'}">速冷模式</p>
           </div>
         </div>
-        <div class="wjx-mode-item border-right-gray" :class="{[status + '-background']: modeValue === 'energySaving'}" @click='changeMode("energySaving")'>
+        <div class="wjx-mode-item border-left-gray" :class="{[status + '-background']: modeValue === 'energySaving'}" @click='changeMode("energySaving")'>
           <div>
             <div class="mode-icon" :class="{[modeValue === 'energySaving' ? 'energy-saving-icon-active' : 'energy-saving-icon']: true}"></div>
-            <p>节能模式</p>
+            <p class="gray_font" :class="{active: modeValue === 'energySaving'}">节能模式</p>
           </div>
         </div>
       </div>
     </div>
-  </div>
+    <div class="row-2 gray_bg"></div>
+  </span>
   <script src="js/vue.min.js"></script>
   <script src="js/vue-stone.js"></script>
   <script type="text/javascript" src="js/jquery.js"></script>
@@ -171,8 +175,8 @@
           this.range_data_array.value = { value: 3, text: '弱' }
           self.controlDevice({
             "command": [{
-              "stream_id": "NegativeIonFunction",//启动
-              "current_value": value ? 1 : 0
+              "stream_id": "PurificationModuleMode",//启动
+              "current_value": value ? 0 : 4
             }]
           }, function (suc) {
           });
@@ -222,12 +226,21 @@
           });
         },
         showButton: function (flag) {//配置导航按钮隐藏显示
-          JDSMART.app.config(
-            {
-              showBack: flag,
-              showShare: flag,
-              showMore: flag
-            });
+          let color = '#45d69a';
+          switch (this.status) {
+            case 'green': color = '#45d69a'
+              break;
+            case 'orange': color = '#ff9166'
+              break;
+            case 'red': color = '#ef7070'
+              break;
+          }
+          JDSMART.app.config({
+            showBack: flag,
+            showShare: flag,
+            showMore: flag,
+            color: color,
+          });
         },
         //获取设备初始化数据
         getInitData: function () {
@@ -293,14 +306,14 @@
             }
             //环境传感器温度值
             if (val["stream_id"] == "EnvironmentalSensorTemperature") {
-              self.ambientTemperature = val["current_value"];
+              self.ambientTemperature = parseInt(val["current_value"]) - 80;
             }
             //杀菌是否启动
-            if (val["stream_id"] == "NegativeIonFunction") {
-              if (val["current_value"] == 1) {
-                self.isSterilization = true;
-              } else {
+            if (val["stream_id"] == "PurificationModuleMode") {
+              if (val["current_value"] == 4) {
                 self.isSterilization = false
+              } else {
+                self.isSterilization = true
               }
             }
             //开启杀菌
@@ -329,6 +342,7 @@
             }
           });
           self.warn = !closeDoor;
+          this.showButton(true)
         },
         controlDevice: function (command, callback) {
           JDSMART.io.controlDevice(      //控制设备接口：如开关
