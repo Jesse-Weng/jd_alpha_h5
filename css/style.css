@@ -27,7 +27,7 @@ header ul{ overflow: hidden; padding: 0 0.02rem;}
 header ul li{ float: left; width: 33.333%; font-size: 13px; text-align: center;}
 header ul li span{ font-size: .41rem;}
 header ul li div{ font-size: .36rem;border-left: 1px solid #fff;border-right: 1px solid #fff; padding-top: .035rem}
-header ul li p{ margin-top: .13rem; margin-bottom: .09rem; font-size: 14px;}
+header ul li p{ margin-top: .13rem; position: relative; top: 0.1rem; font-size: 14px;}
 header dl{ width:44%; position:absolute; top:50%; margin-top:-24px; color:#fff; text-align:center; right:0; font-size:20px;}
 /* 默认样式 */
 #app {
@@ -152,11 +152,11 @@ header.red_bg{ background-image: url('../img/red_bg.png')}
 }
 .air-freshness-index {
     width: 40%;
-    border: 2px solid #fff;
+    border: .01rem solid #fff;
     border-radius: 25px;
     margin: .26rem auto;
     font-size: .12rem;
-    height: .22rem;
+    height: .24rem;
     line-height: .22rem;
 }
 .cold-room-setting {
@@ -168,12 +168,17 @@ header.red_bg{ background-image: url('../img/red_bg.png')}
     font-size: 30px;
 }
 .border-bottom-gray {
-    border-top: .05rem solid #EFEFEF;
-    border-left: .04rem solid #EFEFEF;
-    border-right: .04rem solid #EFEFEF;
+    margin-top: .05rem;
+    margin-left: .04rem;
+    margin-right: .04rem;
+    border-radius: .04rem;
+    background: #fff;
 }
 .gray_bg {
     background: #eee;
+}
+.warn-container {
+    background: #ffffff;
 }
 .warn {
     width: .2rem;

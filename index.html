@@ -33,7 +33,7 @@
 </style>
 
 <body>
-  <div id="app" style="margin-top:0px;background: #fff;">
+  <div id="app" style="margin-top:0px;background: #EFEFEF;">
     <!--头部及power-->
     <!--蓝色-->
     <header :class="status+'_bg'">
@@ -57,7 +57,7 @@
         空气清新指数: {{airFreshnessIndex}}
       </div>
     </header>
-    <div slot="header" class="c-panel-header u-cross-center" v-if="warn">
+    <div slot="header" class="c-panel-header u-cross-center warn-container" v-if="warn">
       <div class="c-panel-title font-14">
         <img class="warn" src="./img/warn.png" />冰箱门未关
       </div>
